@@ -82,6 +82,10 @@ table.prtable > tbody > tr > td {
   vertical-align: middle;
 }
 
+.buildstatus {
+  max-width: 100px;
+}
+
 .merge-info .label {
   white-space: normal;
 }

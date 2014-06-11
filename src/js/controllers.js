@@ -258,9 +258,14 @@ angular.module('prControllers', ['appServices'])
       queryBuildStatusFast: function () {
         var pr = this;
 
+        if (pr.merge && pr.merge.status)
+          return;
+
         var prName = 'PR #' + pr.id;
         return PRMerge($scope.repoInfo).queryFast(pr.id)
         .success(function(data, status, headers, config) {
+          if (pr.merge && pr.merge.status)
+            return;
           pr.merge = data;
         })
         .error(function(data, status, headers, config) {
@@ -288,6 +293,9 @@ angular.module('prControllers', ['appServices'])
       },
       assign: function(id, data) {
         return this.get(id).assign(data);
+      },
+      count: function() {
+        return (_.values(this) || []).length;
       }
     };
 
