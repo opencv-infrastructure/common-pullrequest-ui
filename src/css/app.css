@@ -175,6 +175,10 @@ table.prtable td.description,
   text-align: left;
 }
 
+table.prtable td.description .label.label-warning {
+  white-space: normal;
+}
+
 .markdown-body p code,
 .markdown-body code {
   word-wrap: break-word;
