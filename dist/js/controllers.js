@@ -223,7 +223,7 @@ angular.module('prControllers', ['appServices'])
 
         var prName = 'PR #' + pr.id;
         alert.warning(prName + ": Quering merge status...");
-        return PRMerge($scope.repoInfo).query(pr.id)
+        return $scope.PRMerge.query(pr.id)
         .success(function(data, status, headers, config) {
           pr.merge = data;
           pr.merge.$timeoutHandle = $timeout(clearMergeInfo, 60000);
@@ -244,7 +244,7 @@ angular.module('prControllers', ['appServices'])
         }
 
         alert.warning(prName + ": merging...");
-        return PRMerge($scope.repoInfo).merge(pr.id)
+        return $scope.PRMerge.merge(pr.id)
         .success(function(data, status, headers, config) {
           alert.success(prName + ": merge succeded!");
           $scope.openModalMessage(data.message, data.detail);
@@ -257,8 +257,6 @@ angular.module('prControllers', ['appServices'])
       },
       queryBuildStatusFast: function () {
         var pr = this;
-        if (pr.merge && pr.merge.status)
-          return;
 
         if ($scope.repoInfo.merge_service == undefined)
             return;
@@ -267,7 +265,7 @@ angular.module('prControllers', ['appServices'])
           return;
 
         var prName = 'PR #' + pr.id;
-        return PRMerge($scope.repoInfo).queryFast(pr.id)
+        return $scope.PRMerge.queryFast(pr.id)
         .success(function(data, status, headers, config) {
           if (pr.merge && pr.merge.status)
             return;
@@ -314,6 +312,7 @@ angular.module('prControllers', ['appServices'])
     target.repoName = undefined;
     target.repositories = undefined;
     target.repoInfo = undefined;
+    target.PRMerge = undefined;
     target.authInfo = undefined;
     target.pullrequests = new PRCollection();
     target.builders = undefined;
@@ -335,6 +334,7 @@ angular.module('prControllers', ['appServices'])
       }
       target.repoName = repoName;
       target.repoInfo = repoInfo;
+      target.PRMerge = PRMerge(repoInfo);
       alert.success("Loading data for repo '" + repoName + "' ...");
 
       var loadPromises = [];
