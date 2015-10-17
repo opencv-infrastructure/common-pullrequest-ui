@@ -4,10 +4,6 @@
 
 angular.module('appServices', ['ngResource'])
 
-.run(function () {
-  console.log("service run");
-})
-
 .factory('PRConfig', function ($http) {
   return {
     query: function(params) { return $http.get('/config/pullrequests-config.json', {'params':params}); }
@@ -33,16 +29,66 @@ angular.module('appServices', ['ngResource'])
   }
 })
 
-.factory('PRMerge', function ($http) {
+.factory('PRMerge', function ($http, $q) {
   return function(repoInfo) {
+    var queueFastHandlers = {};
+    function queryFastImpl() {
+      var handlers = queueFastHandlers;
+      queueFastHandlers = {};
+      var keys = Object.keys(handlers);
+      if (keys.length === 0) return;
+      return $http.get(repoInfo.merge_service.url + 'queryFast',
+          {params: {'repoId': repoInfo.id, 'prId': keys}})
+      .then(
+      function(response) {
+        _.forEach(handlers, function(h, pr) {
+          var r = {
+            data: (keys.length === 1) ? response.data :
+                    (response.data ? response.data[pr] : undefined),
+            status: response.status,
+            headers: response.headers,
+          };
+          h.resolve(r);
+        })
+      },
+      function(response) {
+        _.forEach(handlers, function(h, pr) {
+          var r = {
+            data: (keys.length === 1) ? response.data :
+              (response.data ? response.data[pr] : undefined),
+            status: response.status,
+            headers: response.headers,
+          };
+          h.reject(r);
+        })
+      })
+      ;
+    }
+    var queryFastCall = _.debounce(queryFastImpl, 100);
+
     return {
       query: function(prid) {
         return $http.post(repoInfo.merge_service.url + 'query',
           {'repoId':repoInfo.id, 'prId':prid});
       },
       queryFast: function(prid) {
-        return $http.get(repoInfo.merge_service.url + 'queryFast',
-           {params: {'repoId':repoInfo.id, 'prId':prid}});
+        var d = $q.defer(), promise = d.promise;
+        promise.success = function(fn) {
+          promise.then(function(response) {
+            fn(response.data, response.status, response.headers, undefined);
+          });
+          return promise;
+        };
+
+        promise.error = function(fn) {
+          promise.then(null, function(response) {
+            fn(response.data, response.status, response.headers, undefined);
+          });
+          return promise;
+        };
+        queueFastHandlers[prid] = d;
+        queryFastCall();
+        return promise;
       },
       merge: function(prid) {
         return $http.post(repoInfo.merge_service.url + 'merge',
