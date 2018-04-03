@@ -170,6 +170,11 @@ angular.module('appServices', ['ngResource'])
   return function(input, max) {
     if (input === undefined)
       return "";
+    var cut_pos = input.indexOf('<cut>');
+    if (cut_pos < 0)
+      cut_pos = input.indexOf('<cut/>');
+    if (cut_pos >= 0)
+      input = input.substring(0, cut_pos);
     max = parseInt(max);
     if (input.length > max)
       return input.substring(0, max) + "...";
